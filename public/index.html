@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="jsInvoices">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/app.css">
   </head>
-  <body>
+  <body ng-controller="mainController" ng-init="start()">
 
     <nav class="navbar navbar-default navbar-static-top">
       <div class="container">
@@ -21,22 +21,237 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Invoice App</a>
+          <a class="navbar-brand" href="#" ng-click="showPage('invoices')">Invoice App</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href="#">Products</a></li>
-            <li><a href="#">Customers</a></li>
-            <li><a href="#">Invoices</a></li>
+            <li><a href="#" ng-click="showPage('products')">Products</a></li>
+            <li><a href="#" ng-click="showPage('customers')">Customers</a></li>
+            <li><a href="#" ng-click="showPage('invoices')">Invoices</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div class="container">
-      
+    <div class="col-md-3 col-lg-3"></div>
+    <div class="container col-md-6 col-lg-6">
+      <div ng-show="page=='products'">
+        <p class="h2 text-center">List of Products</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th title="Add">
+                <span ng-click="createProduct()" class="glyphicon glyphicon-plus text-primary"></span>
+              </th>
+              <th class="text-right">#</th>
+              <th>Name</th>
+              <th class="text-right">Price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="product in products">
+              <td title="Remove">
+                <span ng-click="removeProduct(product.id)" class="glyphicon glyphicon-remove text-danger"></span>
+              </td>
+              <td class="text-right">{{ $index+1 }}</td>
+              <td>{{ product.name }}</td>
+              <td class="text-right">${{ product.price }}</td>
+              <td class="text-right" title="Edit">
+                <span ng-click="editProduct(product.id)" class="glyphicon glyphicon-edit text-info"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div ng-show="page=='customers'">
+        <p class="h2 text-center">List of Customers</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th title="Add">
+                <span ng-click="createCustomer()" class="glyphicon glyphicon-plus text-primary"></span>
+              </th>
+              <th class="text-right">#</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Phone</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="customer in customers">
+              <td title="Remove">
+                <span ng-click="removeCustomer(customer.id)" class="glyphicon glyphicon-remove text-danger"></span>
+              </td>
+              <td class="text-right">{{ $index+1 }}</td>
+              <td>{{ customer.name }}</td>
+              <td>{{ customer.address }}</td>
+              <td>{{ customer.phone }}</td>
+              <td class="text-right" title="Edit">
+                <span ng-click="editCustomer(customer.id)" class="glyphicon glyphicon-edit text-info"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div ng-show="page=='invoices'">
+        <p class="h2 text-center">List of Invoices</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th title="Add">
+                <span ng-click="createInvoice()" class="glyphicon glyphicon-plus text-primary"></span>
+              </th>
+              <th class="text-right">#</th>
+              <th>Customer</th>
+              <th class="text-right">Discount</th>
+              <th class="text-right">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="invoice in invoices">
+              <td title="Remove">
+                <span ng-click="removeInvoice(invoice.id)" class="glyphicon glyphicon-remove text-danger"></span>
+              </td>
+              <td class="text-right">{{ $index+1 }}</td>
+              <td>{{ customers[invoice.customer_id].name }}</td>
+              <td class="text-right">{{ invoice.discount | number:2 }}%</td>
+              <td class="text-right">${{ invoice.total | number:2 }}</td>
+              <td class="text-right" title="Edit">
+                <span ng-click="editInvoice(invoice.id)" class="glyphicon glyphicon-edit text-info"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <form name="productForm" ng-show="page=='product-form'">
+        <span class="pull-right glyphicon glyphicon-remove" href="#" ng-click="backPage()"></span>
+        <p class="h2 text-center">Product Info</p>
+        <fieldset>
+          <div class="form-group">
+            <label for="new-product-name">Name:</label>
+            <input id="new-product-name" class="form-control" ng-model="currentProduct.name" required />
+          </div>
+          <div class="form-group">
+            <label for="new-product-price">Price ($):</label>
+            <input type="number" min=".01" id="new-product-price" class="form-control" ng-model="currentProduct.price" required />
+          </div>
+          <div class="form-actions hidden">
+            <button class="btn btn-primary form-control" ng-click="saveProduct()" ng-disabled="!productForm.$valid">
+              Save Product
+            </button>
+          </div>
+        </fieldset>
+      </form>
+      <form name="customerForm" ng-show="page=='customer-form'">
+        <span class="pull-right glyphicon glyphicon-remove" href="#" ng-click="backPage()"></span>
+        <p class="h2 text-center">Customer Info</p>
+        <fieldset>
+          <div class="form-group">
+            <label for="new-customer-name">Name:</label>
+            <input id="new-customer-name" class="form-control" ng-model="currentCustomer.name" required />
+          </div>
+          <div class="form-group">
+            <label for="new-customer-address">Address:</label>
+            <input id="new-customer-address" class="form-control" ng-model="currentCustomer.address" required />
+          </div>
+          <div class="form-group">
+            <label for="new-customer-phone">Phone:</label>
+            <input id="new-customer-phone" class="form-control" ng-model="currentCustomer.phone" required />
+          </div>
+          <div class="form-actions hidden">
+            <button class="btn btn-primary form-control" ng-click="saveCustomer()" ng-disabled="!customerForm.$valid">
+              Save Customer
+            </button>
+          </div>
+        </fieldset>
+      </form>
+      <form ng-show="page=='invoice-form'">
+        <span class="pull-right glyphicon glyphicon-remove" href="#" ng-click="backPage()"></span>
+        <p class="h2 text-center">Invoice Info</p>
+        <fieldset>
+          <div class="form-group">
+            <label for="customer_id">Customer:</label>
+            <span class="pull-right">[<a href="#" ng-click="createCustomer()">add new</a>]</span>
+            <select id="customer_id" name="customer_id" class="form-control" ng-model="currentInvoice.customer_id"
+             ng-options="customer.id as customer.name for customer in customers" required></select>
+          </div>
+          <div class="form-group">
+          </div>
+        </fieldset>
+        <fieldset ng-show="currentInvoice.customer_id">
+          <div class="form-group">
+            <label>Products:</label>
+            <span class="pull-right">[<a href="#" ng-click="createProduct()">add new</a>]</span>
+            <table class="table">
+              <thead>
+                <th>
+                  <div class="dropdown">
+                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                      <span class="glyphicon glyphicon-plus"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li ng-repeat="product in products" ng-click="createInvoiceItem(product.id)">
+                        {{ product.name + ' ($' + product.price + ')' }}
+                      </li>
+                    </ul>
+                  </div>
+                </th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Total</th>
+              </thead>
+              <tbody>
+              <tr ng-repeat="item in currentInvoiceItems track by $index">
+                <td title="Remove">
+                  <span ng-click="removeInvoiceItem(item.id)" class="glyphicon glyphicon-remove text-danger"></span>
+                </td>
+                <td>
+                  {{ products[item.product_id].name }}
+                </td>
+                <td>
+                  <input class="form-control" type="number" min="1" value="{{item.quantity}}" ng-model="currentInvoiceItems[item.id].quantity"/>
+                </td>
+                <td class="text-right">
+                  x ${{ products[item.product_id].price | number:2 }}
+                </td>
+                <td class="text-right">
+                  = ${{ (products[item.product_id].price * item.quantity) | number:2 }}
+                </td>
+              </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4">
+                    &nbsp;
+                  </td>
+                  <td class="h3 text-right">
+                    <span>${{ currentInvoice.total }}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="form-group">
+            <label for="discount">Discount (%):</label>
+            <input id="discount" class="form-control" type="number" min="0" max="100" ng-model="currentInvoice.discount"/>
+          </div>
+        </fieldset>
+        <fieldset>
+          <div class="form-actions hidden">
+            <button class="btn btn-primary form-control" ng-click="saveInvoice()" ng-disabled="currentInvoice.total==0">
+              Save Invoice
+            </button>
+          </div>
+        </fieldset>
+      </form>
     </div> <!-- /container -->
 
+    <script type="text/javascript" src="/js/lib/angular/angular.min.js"></script>
+    <script type="text/javascript" src="/js/jsInvoices.js"></script>
     <script type="text/javascript" src="/js/lib/jquery/jquery-2.0.3.min.js"></script>
     <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
   </body>
